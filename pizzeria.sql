@@ -1,158 +1,330 @@
--- MySQL Workbench Synchronization
--- Generated: 2025-03-13 22:39
--- Model: New Model
--- Version: 1.0
--- Project: Name of the project
--- Author: marc sanchez
+-- MySQL Workbench Forward Engineering
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
-ALTER SCHEMA `mydb`  DEFAULT CHARACTER SET utf8  DEFAULT COLLATE utf8_general_ci ;
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS `mydb`.`empleado` (
-  `id_empleado` INT() NOT NULL AUTO_INCREMENT,
-  `nombre` VARCHAR(30) NOT NULL,
-  `apellidos` VARCHAR(50) NOT NULL,
-  `nif` VARCHAR(10) UNIQUE NOT NULL,
-  `telefono` VARCHAR(15) NOT NULL,
-  `puesto` ENUM('cocinero', 'repartidor') NOT NULL,
-  PRIMARY KEY (`id_empleado`),
-  INDEX `fk_empleado_id_tienda_idx` (`pedidos_id_tienda` ASC) VISIBLE,
-  FOREIGN KEY (`id_tienda`)
-    REFERENCES `mydb`.`pedidos` (`id_tienda`)
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET utf8 ;
+-- -----------------------------------------------------
+-- Schema new_schema1
+-- -----------------------------------------------------
+USE `mydb` ;
+
+-- -----------------------------------------------------
+-- Table `mydb`.`direccion`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`direccion` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `calle` VARCHAR(100) NOT NULL,
+  `numero` VARCHAR(4) NULL,
+  `piso` VARCHAR(2) NULL,
+  `puerta` VARCHAR(2) NULL,
+  `ciudad` VARCHAR(50) NOT NULL,
+  `cp` VARCHAR(5) NOT NULL,
+  `pais` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`proveedor`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`proveedor` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(45) NOT NULL,
+  `telefono` VARCHAR(12) NULL,
+  `fax` VARCHAR(15) NULL,
+  `nif` VARCHAR(20) NOT NULL,
+  `id_direccion` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `nif_UNIQUE` (`nif` ASC) VISIBLE,
+  INDEX `nombre` (`nombre` ASC) VISIBLE,
+  INDEX `fk_proveedor_direccion1_idx` (`id_direccion` ASC) VISIBLE,
+  CONSTRAINT `fk_proveedor_direccion1`
+    FOREIGN KEY (`id_direccion`)
+    REFERENCES `mydb`.`direccion` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `mydb`.`gafas`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`gafas` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `marca` VARCHAR(50) NOT NULL,
+  `graduación_lente_izq` DECIMAL NULL,
+  `graduacion_lente_der` DECIMAL NULL,
+  `montura` ENUM('flotante', 'pasta', 'metálica') NOT NULL,
+  `color_montura` VARCHAR(45) NULL,
+  `color_lente_izq` VARCHAR(45) NULL,
+  `color_lente_der` VARCHAR(45) NULL,
+  `precio` DECIMAL(10,2) NOT NULL,
+  `id_proveedor` INT NOT NULL,
+  PRIMARY KEY (`id`, `id_proveedor`),
+  INDEX `fk_gafas_proveedor1_idx` (`id_proveedor` ASC) VISIBLE,
+  CONSTRAINT `fk_gafas_proveedor1`
+    FOREIGN KEY (`id_proveedor`)
+    REFERENCES `mydb`.`proveedor` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`cliente`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`cliente` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(45) NOT NULL,
+  `direccion` VARCHAR(45) NOT NULL,
+  `telefono` VARCHAR(12) NULL,
+  `mail` VARCHAR(45) NULL,
+  `fecha_registro` DATE NOT NULL,
+  `recomendado_por` INT NULL,
+  `id_cliente` INT NOT NULL,
+  `id_direccion` INT NOT NULL,
+  PRIMARY KEY (`id`, `id_cliente`),
+  INDEX `idx_nombre` (`id_cliente` ASC) VISIBLE,
+  INDEX `fk_cliente_direccion1_idx` (`id_direccion` ASC) VISIBLE,
+  CONSTRAINT `fk_cliente_cliente1`
+    FOREIGN KEY (`id_cliente`)
+    REFERENCES `mydb`.`cliente` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_cliente_direccion1`
+    FOREIGN KEY (`id_direccion`)
+    REFERENCES `mydb`.`direccion` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`empleado`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`empleado` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(30) NOT NULL,
+  `apellidos` VARCHAR(50) NOT NULL,
+  `nif` VARCHAR(10) NOT NULL,
+  `telefono` VARCHAR(12) NOT NULL,
+  `puesto` ENUM('cocinero', 'repartidor') NOT NULL,
+  `id_tienda` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `nif_UNIQUE` (`nif` ASC) VISIBLE,
+  UNIQUE INDEX `telefono_UNIQUE` (`telefono` ASC) VISIBLE,
+  INDEX `fk_empleado_tienda1_idx` (`id_tienda` ASC) VISIBLE,
+  CONSTRAINT `fk_empleado_tienda1`
+    FOREIGN KEY (`id_tienda`)
+    REFERENCES `mydb`.`tienda` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`venta`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`venta` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `fecha_venta` DATE NOT NULL,
+  `fecha_periodo_inicio` DATE NOT NULL,
+  `fecha_periodo_fin` DATE NOT NULL,
+  `id_cliente` INT NOT NULL,
+  `id_empleado` INT NOT NULL,
+  `id_gafas` INT NOT NULL,
+  PRIMARY KEY (`id`, `id_cliente`, `id_empleado`, `id_gafas`),
+  INDEX `fk_venta_cliente1_idx` (`id_cliente` ASC) VISIBLE,
+  INDEX `fk_venta_empleado1_idx` (`id_empleado` ASC) VISIBLE,
+  INDEX `fk_venta_gafas1_idx` (`id_gafas` ASC) VISIBLE,
+  CONSTRAINT `fk_venta_cliente1`
+    FOREIGN KEY (`id_cliente`)
+    REFERENCES `mydb`.`cliente` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_venta_empleado1`
+    FOREIGN KEY (`id_empleado`)
+    REFERENCES `mydb`.`empleado` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_venta_gafas1`
+    FOREIGN KEY (`id_gafas`)
+    REFERENCES `mydb`.`gafas` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`clientes`
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`clientes` (
-  `id_clientes` INT(11) NOT NULL AUTO_INCREMENT,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(45) NOT NULL,
   `apellidos` VARCHAR(100) NOT NULL,
   `direccion` VARCHAR(100) NOT NULL,
   `cp` VARCHAR(5) NOT NULL,
   `localidad` VARCHAR(45) NOT NULL,
   `provincia` VARCHAR(45) NOT NULL,
-  `telefono` VARCHAR(12) NULL DEFAULT NULL,
-  PRIMARY KEY (`id_clientes`)
-  REFERENCES `mydb`.`pedidos` (`id_tienda`)
+  `telefono` VARCHAR(12) NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`tienda`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`tienda` (
+  `id` INT NOT NULL,
+  `direccion` VARCHAR(100) NOT NULL,
+  `cp` VARCHAR(5) NOT NULL,
+  `localidad` VARCHAR(50) NULL,
+  `provincia` VARCHAR(50) NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`empleado`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`empleado` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(30) NOT NULL,
+  `apellidos` VARCHAR(50) NOT NULL,
+  `nif` VARCHAR(10) NOT NULL,
+  `telefono` VARCHAR(12) NOT NULL,
+  `puesto` ENUM('cocinero', 'repartidor') NOT NULL,
+  `id_tienda` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `nif_UNIQUE` (`nif` ASC) VISIBLE,
+  UNIQUE INDEX `telefono_UNIQUE` (`telefono` ASC) VISIBLE,
+  INDEX `fk_empleado_tienda1_idx` (`id_tienda` ASC) VISIBLE,
+  CONSTRAINT `fk_empleado_tienda1`
+    FOREIGN KEY (`id_tienda`)
+    REFERENCES `mydb`.`tienda` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `mydb`.`pedidos`
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`pedidos` (
-  `id_pedido` INT(11) NOT NULL AUTO_INCREMENT,
-  `id_cliente` INT(11) NOT NULL,
-  `id_tienda` INT(11) NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `fecha/hora` DATETIME NOT NULL,
   `tipo_pedido` ENUM('domicilio', 'recogida') NOT NULL,
   `precio_total` DECIMAL(10,2) NOT NULL,
-  `id_repartidor` INT(11) NOT NULL,
   `hora_entrega` DATETIME NOT NULL,
-  `clientes_id_clientes` INT(11) NOT NULL,
-  `tienda_id_tienda` INT(11) NOT NULL,
-  `empleado_id_empleado` INT(11) NOT NULL,
-  `empleado_tienda_id_tienda` INT(11) NOT NULL,
-  PRIMARY KEY (`id_pedido`, `clientes_id_clientes`, `tienda_id_tienda`, `empleado_id_empleado`, `empleado_tienda_id_tienda`),
-  INDEX `fk_pedidos_clientes1_idx` (`clientes_id_clientes` ASC) VISIBLE,
-  INDEX `fk_pedidos_tienda1_idx` (`tienda_id_tienda` ASC) VISIBLE,
-  INDEX `fk_pedidos_empleado1_idx` (`empleado_id_empleado` ASC, `empleado_tienda_id_tienda` ASC) VISIBLE,
+  `id_clientes` INT NOT NULL,
+  `id_tienda` INT NOT NULL,
+  `id_empleado` INT NOT NULL,
+  `id_tienda` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_pedidos_clientes1_idx` (`id_clientes` ASC) VISIBLE,
+  INDEX `fk_pedidos_tienda1_idx` (`id_tienda` ASC) VISIBLE,
+  INDEX `fk_pedidos_empleado1_idx` (`id_empleado` ASC, `id_tienda` ASC) VISIBLE,
   CONSTRAINT `fk_pedidos_clientes1`
-    FOREIGN KEY (`clientes_id_clientes`)
-    REFERENCES `mydb`.`clientes` (`id_clientes`)
+    FOREIGN KEY (`id_clientes`)
+    REFERENCES `mydb`.`clientes` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_pedidos_tienda1`
-    FOREIGN KEY (`tienda_id_tienda`)
-    REFERENCES `mydb`.`tienda` (`id_tienda`)
+    FOREIGN KEY (`id_tienda`)
+    REFERENCES `mydb`.`tienda` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_pedidos_empleado1`
-    FOREIGN KEY (`empleado_id_empleado` , `empleado_tienda_id_tienda`)
-    REFERENCES `mydb`.`empleado` (`id_empleado` , `tienda_id_tienda`)
+    FOREIGN KEY (`id_empleado` , `id_tienda`)
+    REFERENCES `mydb`.`empleado` (`id` , `id_tienda`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ENGINE = InnoDB;
 
-CREATE TABLE IF NOT EXISTS `mydb`.`tienda` (
-  `id_tienda` INT(11) NOT NULL,
-  `direccion` VARCHAR(100) NOT NULL,
-  `cp` VARCHAR(5) NOT NULL,
-  `localidad` VARCHAR(50) NULL DEFAULT NULL,
-  `provincia` VARCHAR(50) NULL DEFAULT NULL,
-  PRIMARY KEY (`id_tienda`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
 
+-- -----------------------------------------------------
+-- Table `mydb`.`producto`
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`producto` (
-  `id_producto` INT(11) NOT NULL AUTO_INCREMENT,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(45) NOT NULL,
-  `descripcion` MEDIUMTEXT NULL DEFAULT NULL,
-  `imagen` VARCHAR(45) NULL DEFAULT NULL,
+  `descripcion` MEDIUMTEXT NULL,
+  `imagen` VARCHAR(45) NULL,
   `precio` DECIMAL(10,2) NOT NULL,
   `tipo` ENUM('pizza', 'hamburguesa', 'bebida') NOT NULL,
-  PRIMARY KEY (`id_producto`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `mydb`.`categorias`
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`categorias` (
-  `id_categorias` INT(11) NOT NULL AUTO_INCREMENT,
-  `nombre` VARCHAR(100) NULL DEFAULT NULL,
-  PRIMARY KEY (`id_categorias`),
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(100) NULL,
+  PRIMARY KEY (`id`),
   UNIQUE INDEX `nombre_UNIQUE` (`nombre` ASC) VISIBLE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `mydb`.`pedido_producto`
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`pedido_producto` (
-  `id_pedido_prod` INT(11) NOT NULL AUTO_INCREMENT,
-  `id_producto` INT(11) NOT NULL,
-  `cantidad` INT(11) NOT NULL,
-  `pedidos_id_pedido` INT(11) NOT NULL,
-  `pedidos_clientes_id_clientes` INT(11) NOT NULL,
-  `pedidos_tienda_id_tienda` INT(11) NOT NULL,
-  `pedidos_empleado_id_empleado` INT(11) NOT NULL,
-  `pedidos_empleado_tienda_id_tienda` INT(11) NOT NULL,
-  `producto_id_producto` INT(11) NOT NULL,
-  PRIMARY KEY (`id_pedido_prod`, `pedidos_id_pedido`, `pedidos_clientes_id_clientes`, `pedidos_tienda_id_tienda`, `pedidos_empleado_id_empleado`, `pedidos_empleado_tienda_id_tienda`, `producto_id_producto`),
-  INDEX `fk_pedido_producto_pedidos1_idx` (`pedidos_id_pedido` ASC, `pedidos_clientes_id_clientes` ASC, `pedidos_tienda_id_tienda` ASC, `pedidos_empleado_id_empleado` ASC, `pedidos_empleado_tienda_id_tienda` ASC) VISIBLE,
-  INDEX `fk_pedido_producto_producto1_idx` (`producto_id_producto` ASC) VISIBLE,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `cantidad` INT NOT NULL,
+  `id_pedido` INT NOT NULL,
+  `id_producto` INT NOT NULL,
+  `id_clientes` INT NOT NULL,
+  `id_tienda` INT NOT NULL,
+  `id_empleado` INT NOT NULL,
+  `id_tienda` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_pedido_producto_pedidos1_idx` (`id_pedido` ASC, `id_clientes` ASC, `id_tienda` ASC, `id_empleado` ASC, `id_tienda` ASC) VISIBLE,
+  INDEX `fk_pedido_producto_producto1_idx` (`id_producto` ASC) VISIBLE,
   CONSTRAINT `fk_pedido_producto_pedidos1`
-    FOREIGN KEY (`pedidos_id_pedido` , `pedidos_clientes_id_clientes` , `pedidos_tienda_id_tienda` , `pedidos_empleado_id_empleado` , `pedidos_empleado_tienda_id_tienda`)
-    REFERENCES `mydb`.`pedidos` (`id_pedido` , `clientes_id_clientes` , `tienda_id_tienda` , `empleado_id_empleado` , `empleado_tienda_id_tienda`)
+    FOREIGN KEY (`id_pedido` , `id_clientes` , `id_tienda` , `id_empleado` , `id_tienda`)
+    REFERENCES `mydb`.`pedidos` (`id` , `id_clientes` , `id_tienda` , `id_empleado` , `id_tienda`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_pedido_producto_producto1`
-    FOREIGN KEY (`producto_id_producto`)
-    REFERENCES `mydb`.`producto` (`id_producto`)
+    FOREIGN KEY (`id_producto`)
+    REFERENCES `mydb`.`producto` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `mydb`.`pizza`
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `mydb`.`pizza` (
-  `id_pizza` INT(11) NOT NULL AUTO_INCREMENT,
-  `id_categoria` INT(11) NOT NULL,
-  `producto_id_producto` INT(11) NOT NULL,
-  `categorias_id_categorias` INT(11) NOT NULL,
-  PRIMARY KEY (`id_pizza`, `id_categoria`, `producto_id_producto`, `categorias_id_categorias`),
-  INDEX `fk_pizza_producto1_idx` (`producto_id_producto` ASC) VISIBLE,
-  INDEX `fk_pizza_categorias1_idx` (`categorias_id_categorias` ASC) VISIBLE,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_producto` INT NOT NULL,
+  `id_categorias` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_pizza_producto1_idx` (`id_producto` ASC) VISIBLE,
+  INDEX `fk_pizza_categorias1_idx` (`id_categorias` ASC) VISIBLE,
   CONSTRAINT `fk_pizza_producto1`
-    FOREIGN KEY (`producto_id_producto`)
-    REFERENCES `mydb`.`producto` (`id_producto`)
+    FOREIGN KEY (`id_producto`)
+    REFERENCES `mydb`.`producto` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_pizza_categorias1`
-    FOREIGN KEY (`categorias_id_categorias`)
-    REFERENCES `mydb`.`categorias` (`id_categorias`)
+    FOREIGN KEY (`id_categorias`)
+    REFERENCES `mydb`.`categorias` (`id`)
     ON DELETE CASCADE
     ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+ENGINE = InnoDB;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
